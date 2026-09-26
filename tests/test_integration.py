@@ -22,3 +22,10 @@ def test_case_data_contains_only_synthetic_tickets():
     rows=synthetic_cases()
     assert len(rows)==28 and len(set(c['ticket'] for c in rows))==28
     assert all('@' not in c['ticket'] for c in rows)
+
+
+def test_mcp_refuses_public_binding(monkeypatch):
+    import pytest
+    from downshift.core import DownshiftError
+    monkeypatch.setenv('DOWNSHIFT_HOST','0.0.0.0')
+    with pytest.raises(DownshiftError,match='non-loopback'):create_server()

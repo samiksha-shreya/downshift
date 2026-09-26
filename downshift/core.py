@@ -145,12 +145,14 @@ class Gateway:
                 if isinstance(metadata,str):
                     try: metadata=json.loads(metadata)
                     except ValueError: metadata={}
-                if isinstance(metadata,dict) and metadata.get("route") == TASK:
+                if isinstance(metadata,dict) and metadata.get("route") == TASK and a.get("tfy.span_type") == "Model":
                     summaries.append({"model":a.get("tfy.model.fqn"),"cost_usd":a.get("tfy.model.metric.cost_in_usd"),"span_type":a.get("tfy.span_type")})
             token=(d.get("pagination") or {}).get("nextPageToken")
             if not token: break
             if token in seen: raise DownshiftError("Repeated pagination token")
             seen.add(token)
+        if token:
+            raise DownshiftError("Span query exceeded max_pages; results incomplete. Narrow start_time and retry")
         return summaries
 
 def evaluate(gateway: Gateway, cases: list[dict[str,str]] | None = None) -> dict[str,Any]:
@@ -164,9 +166,12 @@ def evaluate(gateway: Gateway, cases: list[dict[str,str]] | None = None) -> dict
         if not expected: raise DownshiftError("Invalid expected label in case")
         base=gateway.complete(gateway.c.baseline_model,case["ticket"])
         cand=gateway.complete(gateway.c.candidate_model,case["ticket"])
-        rows.append({"ticket":redact(case["ticket"]),"expected":expected,"baseline":base["label"],"candidate":cand["label"],"baseline_correct":base["label"]==expected,"candidate_correct":cand["label"]==expected})
+        baseline_resolved=base.get("resolved_model")
+        candidate_resolved=cand.get("resolved_model")
+        verified=baseline_resolved==gateway.c.baseline_model and candidate_resolved==gateway.c.candidate_model
+        rows.append({"ticket":redact(case["ticket"]),"expected":expected,"baseline":base["label"],"candidate":cand["label"],"baseline_resolved_model":baseline_resolved,"candidate_resolved_model":candidate_resolved,"models_verified":verified,"baseline_correct":base["label"]==expected,"candidate_correct":cand["label"]==expected})
     n=len(rows)
     base_rate=sum(r["baseline_correct"] for r in rows)/n
     candidate_rate=sum(r["candidate_correct"] for r in rows)/n
     # Never declare victory on a tiny fixture; use the sample as demonstration only.
-    return {"task":TASK,"count":n,"baseline_accuracy":base_rate,"candidate_accuracy":candidate_rate,"candidate_regressions":sum(r["baseline_correct"] and not r["candidate_correct"] for r in rows),"eligible_for_canary":n>=20 and candidate_rate>=0.95 and candidate_rate>=base_rate and all(not (r["baseline_correct"] and not r["candidate_correct"]) for r in rows),"rows":rows,"caveat":"Synthetic cases demonstrate the workflow; at least 20 labeled cases and zero regressions are required for a canary recommendation. No production update is automatic."}
+    return {"task":TASK,"count":n,"baseline_accuracy":base_rate,"candidate_accuracy":candidate_rate,"candidate_regressions":sum(r["baseline_correct"] and not r["candidate_correct"] for r in rows),"eligible_for_canary":n>=20 and all(r["models_verified"] for r in rows) and candidate_rate>=0.95 and candidate_rate>=base_rate and all(not (r["baseline_correct"] and not r["candidate_correct"]) for r in rows),"rows":rows,"caveat":"Synthetic cases demonstrate workflow, not real-world quality. Model identity must be confirmed by x-tfy-resolved-model on every call; any missing/mismatched header makes this run inconclusive. No routing update is automatic."}

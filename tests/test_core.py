@@ -56,14 +56,14 @@ def test_evaluation_never_promotes_small_sample():
     class Fake:
         c=C
         def complete(self,model,ticket):
-            return {'label': next(c['label'] for c in synthetic_cases() if c['ticket']==ticket)}
+            return {'label': next(c['label'] for c in synthetic_cases() if c['ticket']==ticket), 'resolved_model':model}
     r=evaluate(Fake(),synthetic_cases()[:8])
     assert r['count']==8 and r['candidate_accuracy']==1 and r['eligible_for_canary'] is False
 
 def test_regression_is_no_go():
     class Fake:
         c=C
-        def complete(self,model,ticket):return {'label':'billing' if model==C.candidate_model else 'technical'}
+        def complete(self,model,ticket):return {'label':'billing' if model==C.candidate_model else 'technical', 'resolved_model':model}
     r=evaluate(Fake(),[{'ticket':'app issue','label':'technical'}]*20)
     assert r['candidate_regressions']==20 and not r['eligible_for_canary']
 
@@ -77,3 +77,18 @@ def test_naive_timestamp_rejected():
 def test_case_validation():
     with pytest.raises(DownshiftError,match='Invalid case'):
         evaluate(None,[{'label':'billing'}])
+
+
+def test_fallback_or_missing_resolved_model_is_inconclusive():
+    class Fake:
+        c=C
+        def complete(self,model,ticket):return {'label':'billing', 'resolved_model':C.baseline_model}
+    cases=[{'ticket':f'billing question {i}', 'label':'billing'} for i in range(25)]
+    r=evaluate(Fake(),cases)
+    assert r['candidate_accuracy']==1 and not r['eligible_for_canary']
+    assert all(not row['models_verified'] for row in r['rows'])
+
+def test_max_page_truncation_raises():
+    def handler(r):return httpx.Response(200,json={'data':[], 'pagination':{'nextPageToken':'new'}})
+    with pytest.raises(DownshiftError,match='incomplete'):
+        Gateway(C,httpx.Client(transport=httpx.MockTransport(handler))).fetch_recent_spans('2026-09-26T00:00:00Z',max_pages=1)

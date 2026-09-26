@@ -26,7 +26,7 @@ def main() -> int:
             spans=g.fetch_recent_spans(start)
             report={"task":TASK,"matched_spans":len(spans),"models":sorted(set(str(s["model"]) for s in spans)),"cost_usd_sum":sum(float(s["cost_usd"] or 0) for s in spans),"warning":"Span types can double-count costs; inspect before using as savings evidence. Prompt content is deliberately excluded."}
         else:
-            report={"task":TASK,"virtual_model":c.virtual_model or "NOT SET","baseline_model":c.baseline_model,"candidate_model":c.candidate_model,"proposed_routing_config":{"type":"weight-based-routing","load_balance_targets":[{"target":c.baseline_model,"weight":90},{"target":c.candidate_model,"weight":10,"metadata_match":{"route":TASK}}]},"status":"PROPOSAL ONLY - no production write. Human must compare live configuration and approve any apply separately."}
+            report={"task":TASK,"virtual_model":c.virtual_model or "NOT SET","baseline_model":c.baseline_model,"candidate_model":c.candidate_model,"proposed_routing_config":{"type":"weight-based-routing","load_balance_targets":[{"target":c.baseline_model,"weight":90},{"target":c.candidate_model,"weight":10,"metadata_match":{"route":TASK}}]},"status":"NON-ACTIONABLE ILLUSTRATION ONLY - not based on a stored evaluation. Human must compare live demo configuration and test before considering any change."}
         text=json.dumps(report,indent=2,sort_keys=True)
         if args.output:
             with open(args.output,"w",encoding="utf8") as f:f.write(text+"\n")

@@ -4,14 +4,14 @@ A small, evidence-first AI cost-governance agent for the TrueFoundry × Polaris 
 
 ## Problem and scope
 
-Expensive default models classify simple tickets. Downshift tests whether one cheaper model produces the same required labels for one `ticket-classify` route. It is not a generic cloud cleaner. Synthetic samples show mechanics, not evidence for production savings. The built-in 28-case fixture is synthetic, not proof of production quality; the rubric requires at least 20 labeled cases, at least 95% candidate accuracy, no accuracy drop, and zero candidate regressions on cases the incumbent got right. Human review is still required.
+Expensive default models classify simple tickets. Downshift tests whether one cheaper model produces the same required labels for one `ticket-classify` route. It is not a generic cloud cleaner. Synthetic samples show mechanics, not evidence for production savings. The built-in 28-case fixture is synthetic, not proof of production quality; the rubric requires at least 20 labeled cases, at least 95% candidate accuracy, no accuracy drop, zero candidate regressions on cases the incumbent got right, and verified resolved-model headers on every call. Human review is still required.
 
 ## How it acts
 
 1. `seed` sends 28 labeled **synthetic** tickets to the baseline model with `x-tfy-metadata: {"route":"ticket-classify"}`. They generate real gateway traces.
-2. `logs` queries paginated spans and returns only model, span type and cost fields. It does not export prompts from real traffic. Do not sum multiple span types as spend without confirming which spans represent billed model calls.
+2. `logs` queries paginated spans and returns only model, span type and cost fields. It does not export prompts from real traffic; only Model spans are returned, and a truncated pagination raises an error. Confirm how the tenant bills spans before calling it spend.
 3. `replay` sends the same labeled tickets to the baseline and one cheaper candidate and reports exact-label accuracy and regressions. It never claims savings from synthetic samples.
-4. `plan` returns a review-only 90/10 virtual-model configuration sketch with `metadata_match` on the candidate. It does not change the Gateway. To prove the routing effect, a human can set up a *demo-only* virtual model in the TrueFoundry console, then send tagged and untagged requests and inspect the response's `x-tfy-resolved-model`. An unconditioned incumbent target is required as a catch-all. Gateway fallback may land on the incumbent even when the config picked the cheap model.
+4. `plan` returns a non-actionable 90/10 virtual-model configuration illustration with `metadata_match` on the candidate. It does not change the Gateway. To prove the routing effect, a human can set up a *demo-only* virtual model in the TrueFoundry console, then send tagged and untagged requests and inspect the response's `x-tfy-resolved-model`. An unconditioned incumbent target is required as a catch-all. Gateway fallback may land on the incumbent even when the config picked the cheap model.
 
 ## Run
 
@@ -38,7 +38,7 @@ Never commit `.env`, a PAT, customer prompts or raw span data. Gateway requests 
 
 ## TrueForge connector
 
-`downshift-mcp` exposes four tools over streamable HTTP at `http://127.0.0.1:8766/mcp`: seed synthetic traffic, replay and score, recent ticket spend, propose canary. TrueForge requires a reachable MCP URL; localhost works only when TrueForge runs on the same machine. In hosted mode, serve behind HTTPS with access control, not on a public unauthenticated port. Attach it through TrueForge Settings > Connectors, enable a Daytona sandbox for Code Mode, then call its tools from the sandbox through `mcp_client.call_tool`. Credentials remain in the MCP server's private environment, never in the sandbox. This connector makes no production write available. **The approval-gated apply tool from the original design is not implemented**, so do not imply the agent changed routing. A manual demo-only configuration change requires separate human approval.
+`downshift-mcp` exposes four tools over streamable HTTP at `http://127.0.0.1:8766/mcp`: seed synthetic traffic, replay and score, recent ticket spend, propose canary. TrueForge requires a reachable MCP URL; localhost works only when TrueForge runs on the same machine. The server refuses non-loopback binding. In hosted mode, a separate private tunnel/HTTPS ingress needs authentication and least-privilege credentials; this repository does not provide that ingress. Do not expose it publicly. Attach it through TrueForge Settings > Connectors, enable a Daytona sandbox for Code Mode, then call its tools from the sandbox through `mcp_client.call_tool`. Credentials remain in the MCP server's private environment, never in the sandbox. This connector makes no production write available. **The approval-gated apply tool from the original design is not implemented**, so do not imply the agent changed routing. A manual demo-only configuration change requires separate human approval.
 
 ## Tests and limitations
 
