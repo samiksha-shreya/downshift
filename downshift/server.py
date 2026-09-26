@@ -1,7 +1,7 @@
 """TrueForge MCP tools. Attach this streamable-HTTP server as a connector.
 
-Only synthetic tickets enter live gateway calls by default. Approval is enforced
-in TrueForge by explicitly gating the apply tool, not by prose alone.
+Only synthetic tickets enter live gateway calls. The server has no apply tool;
+production routing is unchanged.
 """
 import os
 from .core import Config, Gateway, DownshiftError, evaluate, synthetic_cases
@@ -15,7 +15,7 @@ def create_server():
 
     @mcp.tool()
     def seed_synthetic_traffic() -> dict:
-        """Send labeled SYNTHETIC support tickets through the baseline model to create real Gateway traces."""
+        """Send 28 labeled SYNTHETIC support tickets through the baseline model to create real Gateway traces."""
         g=Gateway(Config.from_env())
         rows=[]
         for case in synthetic_cases():

@@ -1,6 +1,6 @@
 """Gateway adapter and conservative classification evaluation.
 
-The tool never changes production routing without an explicit expected-state check.
+The tool does not change production routing.
 """
 from __future__ import annotations
 import json
@@ -55,7 +55,7 @@ def _label(value: Any) -> str | None:
     if not isinstance(value, str):
         return None
     value = value.strip().lower()
-    return value if isinstance(value,str) and value in LABELS else None
+    return value if value in LABELS else None
 
 def redact(s: str) -> str:
     s = re.sub(r"[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}", "[EMAIL]", s)
