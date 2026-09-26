@@ -7,14 +7,18 @@ from .core import Config, DownshiftError, Gateway, TASK, evaluate, synthetic_cas
 
 def main() -> int:
     p = argparse.ArgumentParser(description="Downshift: synthetic ticket-classification rehearsal")
-    p.add_argument("action", choices=("seed", "replay", "logs", "plan"))
+    p.add_argument("action", choices=("smoke", "seed", "replay", "logs", "plan"))
     p.add_argument("--start", help="ISO-8601 start time for logs")
     p.add_argument("--output", help="Save report JSON to this local file")
     args = p.parse_args()
     try:
         c = Config.from_env()
         g = Gateway(c)
-        if args.action == "seed":
+        if args.action == "smoke":
+            case=synthetic_cases()[0]
+            r=g.complete(c.baseline_model,case["ticket"])
+            report={"task":TASK,"mode":"ONE SYNTHETIC LIVE CALL","ticket":case["ticket"],"expected":case["label"],"observed":r["label"],"resolved_model":r["resolved_model"],"warning":"This call may spend provider credits. This is a smoke test only, not quality proof."}
+        elif args.action == "seed":
             result=[]
             for case in synthetic_cases():
                 r=g.complete(c.baseline_model,case["ticket"])

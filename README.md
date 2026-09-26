@@ -27,14 +27,15 @@ export TFY_API_TOKEN=YOUR_SECRET_FROM_PRIVATE_ENV
 export TFY_BASELINE_MODEL=provider/incumbent
 export TFY_CANDIDATE_MODEL=provider/cheap
 export TFY_VIRTUAL_MODEL=demo/virtual
-python -m downshift.cli seed
+python -m downshift.cli smoke  # ONE synthetic paid call; stop if auth/model fails
+python -m downshift.cli seed   # 28 more synthetic calls, only after smoke passes
 python -m downshift.cli logs --start 2026-09-26T00:00:00Z
 python -m downshift.cli replay
 python -m downshift.cli plan
 pytest -q
 ```
 
-Never commit `.env`, a PAT, customer prompts or raw span data. Gateway requests cost provider credits. Start with one test call before sending all 28.
+Never commit `.env`, a PAT, customer prompts or raw span data. Gateway requests cost provider credits. Run `smoke` first; it sends one synthetic call. `seed` sends 28 paid model calls and `replay` sends 56 more. Get approval for any credit spend not already covered.
 
 ## TrueForge connector
 

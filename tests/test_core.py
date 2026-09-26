@@ -8,10 +8,11 @@ C=Config('https://gateway.truefoundry.ai','https://control.example.test','test-t
 
 def test_labels_are_strict():
     assert _label('{"label":"billing"}')=='billing'
-    assert _label('technical')=='technical'
+    assert _label('technical') is None
     assert _label('{"label":"billing","x":1}') is None
     assert _label('financial') is None
     assert _label('') is None
+    assert _label('{"label":"Billing"}') is None
 
 @pytest.mark.parametrize('ticket', ['', 'x'*4001])
 def test_invalid_ticket(ticket):

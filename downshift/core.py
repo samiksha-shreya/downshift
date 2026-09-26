@@ -43,19 +43,14 @@ class Config:
         return cls(*(os.environ[k].rstrip("/") if k.endswith("URL") else os.environ[k] for k in keys), os.getenv("TFY_VIRTUAL_MODEL", ""), os.getenv("TFY_DATA_ROUTING_DESTINATION", "default"))
 
 def _label(value: Any) -> str | None:
-    if isinstance(value, dict) and set(value) == {"label"} and isinstance(value.get("label"), str):
-        value = value["label"]
-    elif isinstance(value, str):
-        try:
-            parsed = json.loads(value)
-            if isinstance(parsed, dict):
-                value = parsed if set(parsed) != {"label"} else parsed.get("label")
-        except ValueError:
-            pass
-    if not isinstance(value, str):
-        return None
-    value = value.strip().lower()
-    return value if value in LABELS else None
+    """Require a single-key JSON object; malformed/extra content is a failure."""
+    if not isinstance(value,str):return None
+    try: data=json.loads(value)
+    except ValueError:return None
+    if not isinstance(data,dict) or set(data)!={"label"}:return None
+    label=data["label"]
+    if not isinstance(label,str) or label!=label.strip().lower():return None
+    return label if label in LABELS else None
 
 def redact(s: str) -> str:
     s = re.sub(r"[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}", "[EMAIL]", s)
@@ -162,8 +157,8 @@ def evaluate(gateway: Gateway, cases: list[dict[str,str]] | None = None) -> dict
     rows=[]
     for case in cases:
         if not isinstance(case,dict) or not isinstance(case.get("ticket"),str): raise DownshiftError("Invalid case")
-        expected = _label(case.get("label"))
-        if not expected: raise DownshiftError("Invalid expected label in case")
+        expected = case.get("label")
+        if expected not in LABELS: raise DownshiftError("Invalid expected label in case")
         base=gateway.complete(gateway.c.baseline_model,case["ticket"])
         cand=gateway.complete(gateway.c.candidate_model,case["ticket"])
         baseline_resolved=base.get("resolved_model")
