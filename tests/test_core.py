@@ -57,7 +57,7 @@ def test_evaluation_never_promotes_small_sample():
         c=C
         def complete(self,model,ticket):
             return {'label': next(c['label'] for c in synthetic_cases() if c['ticket']==ticket)}
-    r=evaluate(Fake())
+    r=evaluate(Fake(),synthetic_cases()[:8])
     assert r['count']==8 and r['candidate_accuracy']==1 and r['eligible_for_canary'] is False
 
 def test_regression_is_no_go():

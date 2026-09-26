@@ -4,14 +4,14 @@ A small, evidence-first AI cost-governance agent for the TrueFoundry × Polaris 
 
 ## Problem and scope
 
-Expensive default models classify simple tickets. Downshift tests whether one cheaper model produces the same required labels for one `ticket-classify` route. It is not a generic cloud cleaner. Synthetic samples show mechanics, not evidence for production savings. The built-in eight-case fixture is intentionally too small to recommend an automatic canary; the rubric requires at least 20 labeled cases, at least 95% candidate accuracy, no accuracy drop, and zero candidate regressions on cases the incumbent got right. Human review is still required.
+Expensive default models classify simple tickets. Downshift tests whether one cheaper model produces the same required labels for one `ticket-classify` route. It is not a generic cloud cleaner. Synthetic samples show mechanics, not evidence for production savings. The built-in 28-case fixture is synthetic, not proof of production quality; the rubric requires at least 20 labeled cases, at least 95% candidate accuracy, no accuracy drop, and zero candidate regressions on cases the incumbent got right. Human review is still required.
 
 ## How it acts
 
-1. `seed` sends eight labeled **synthetic** tickets to the baseline model with `x-tfy-metadata: {"route":"ticket-classify"}`. They generate real gateway traces.
+1. `seed` sends 28 labeled **synthetic** tickets to the baseline model with `x-tfy-metadata: {"route":"ticket-classify"}`. They generate real gateway traces.
 2. `logs` queries paginated spans and returns only model, span type and cost fields. It does not export prompts from real traffic. Do not sum multiple span types as spend without confirming which spans represent billed model calls.
 3. `replay` sends the same labeled tickets to the baseline and one cheaper candidate and reports exact-label accuracy and regressions. It never claims savings from synthetic samples.
-4. `plan` returns a review-only 90/10 virtual-model configuration sketch. It does not change the Gateway. To prove the routing effect, a human can set up a *demo-only* virtual model in the TrueFoundry console, then send tagged and untagged requests and inspect the response's `x-tfy-resolved-model`. An unconditioned incumbent target is required as a catch-all. Gateway fallback may land on the incumbent even when the config picked the cheap model.
+4. `plan` returns a review-only 90/10 virtual-model configuration sketch with `metadata_match` on the candidate. It does not change the Gateway. To prove the routing effect, a human can set up a *demo-only* virtual model in the TrueFoundry console, then send tagged and untagged requests and inspect the response's `x-tfy-resolved-model`. An unconditioned incumbent target is required as a catch-all. Gateway fallback may land on the incumbent even when the config picked the cheap model.
 
 ## Run
 
@@ -34,7 +34,7 @@ python -m downshift.cli plan
 pytest -q
 ```
 
-Never commit `.env`, a PAT, customer prompts or raw span data. Gateway requests cost provider credits. Start with one test call before sending all eight.
+Never commit `.env`, a PAT, customer prompts or raw span data. Gateway requests cost provider credits. Start with one test call before sending all 28.
 
 ## TrueForge connector
 

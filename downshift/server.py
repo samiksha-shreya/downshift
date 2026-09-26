@@ -15,7 +15,7 @@ def create_server():
 
     @mcp.tool()
     def seed_synthetic_traffic() -> dict:
-        """Send eight SYNTHETIC support tickets through the baseline model to create real Gateway traces."""
+        """Send labeled SYNTHETIC support tickets through the baseline model to create real Gateway traces."""
         g=Gateway(Config.from_env())
         rows=[]
         for case in synthetic_cases():
@@ -38,7 +38,7 @@ def create_server():
     def propose_canary() -> dict:
         """Return a review-only 90/10 routing proposal. Does NOT update the Gateway."""
         c=Config.from_env()
-        return {"virtual_model":c.virtual_model,"type":"weight-based-routing","load_balance_targets":[{"target":c.baseline_model,"weight":90},{"target":c.candidate_model,"weight":10}],"status":"proposal only; manually compare against current config"}
+        return {"virtual_model":c.virtual_model,"type":"weight-based-routing","load_balance_targets":[{"target":c.baseline_model,"weight":90},{"target":c.candidate_model,"weight":10,"metadata_match":{"route":"ticket-classify"}}],"status":"proposal only; manually compare against current config"}
 
     return mcp
 

@@ -20,5 +20,5 @@ def test_cli_fails_closed_without_secrets():
 
 def test_case_data_contains_only_synthetic_tickets():
     rows=synthetic_cases()
-    assert len(rows)==8 and len(set(c['ticket'] for c in rows))==8
+    assert len(rows)==28 and len(set(c['ticket'] for c in rows))==28
     assert all('@' not in c['ticket'] for c in rows)
