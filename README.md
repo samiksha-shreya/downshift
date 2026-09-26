@@ -47,3 +47,22 @@ Never commit `.env`, a PAT, customer prompts or raw span data. Gateway requests 
 AI assistance disclosure: Instinct's AI assistant helped design, write and review this project. Samiksha Shreya must review and be able to explain the implementation before submitting.
 
 References: [hackathon](https://hackculture.io/hackathons/agents-that-act), [Gateway request headers](https://www.truefoundry.com/docs/ai-gateway/request-headers), [request logs](https://www.truefoundry.com/docs/ai-gateway/fetch-request-logs), [virtual models](https://www.truefoundry.com/docs/ai-gateway/virtual-model), [TrueForge Code Mode](https://trueforge.dev/key-features/code-mode).
+
+## Local mock walkthrough (when participant tenant access is not available)
+
+A deliberately labeled `MOCK` gateway is included for a network-level rehearsal, not a substitute for TrueFoundry E2E. It binds to 127.0.0.1 only and never uses real provider credits. In one terminal run `python -m downshift.demo_gateway`; in another use:
+
+```sh
+export TFY_GATEWAY_URL=http://127.0.0.1:8765
+export TFY_CONTROL_URL=http://127.0.0.1:8765
+export TFY_API_TOKEN=mock-only
+export TFY_BASELINE_MODEL=demo/incumbent
+export TFY_CANDIDATE_MODEL=demo/cheap
+export TFY_VIRTUAL_MODEL=demo/virtual
+python -m downshift.cli seed
+python -m downshift.cli logs --start 2026-09-26T00:00:00Z
+python -m downshift.cli replay
+python -m downshift.cli plan
+```
+
+The mock intentionally misclassifies one "charged me but order failed" ticket on the cheap model, so the safe result is **KEEP** despite lower mock unit cost. Tagged `demo/virtual` requests resolve to the cheap model; untagged ones to incumbent, exercised by `tests/test_http_e2e.py`. These are invented behaviors for test coverage, not evidence that TrueFoundry's real routing follows the same pattern. Never show mock data as live Gateway logs or savings.
