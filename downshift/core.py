@@ -108,7 +108,9 @@ class Gateway:
     def fetch_recent_spans(self, start_time: str, max_pages: int = 5) -> list[dict[str,Any]]:
         """Summarize recent traffic; do not return prompt/response content from production logs."""
         from datetime import datetime
-        try: datetime.fromisoformat(start_time.replace("Z","+00:00"))
+        try:
+            dt = datetime.fromisoformat(start_time.replace("Z","+00:00"))
+            if dt.tzinfo is None: raise ValueError("timezone required")
         except ValueError as e: raise DownshiftError("start_time must be ISO-8601") from e
         token = None
         summaries: list[dict[str,Any]] = []
