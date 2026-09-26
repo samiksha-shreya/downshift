@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=65"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "downshift-agent"
+version = "0.1.0"
+description = "Approval-gated cost rehearsal for TrueFoundry AI Gateway"
+requires-python = ">=3.10"
+dependencies = ["httpx>=0.24,<1", "mcp>=1.0,<2"]
+
+[project.optional-dependencies]
+test = ["pytest>=7,<9"]
+
+[project.scripts]
+downshift = "downshift.cli:main"
+downshift-mcp = "downshift.server:main"
+
+[tool.setuptools.packages.find]
+include = ["downshift*"]
