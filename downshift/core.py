@@ -139,6 +139,7 @@ def evaluate(gateway: Gateway, cases: list[dict[str,str]] | None = None) -> dict
         raise DownshiftError("Need 1-100 cases")
     rows=[]
     for case in cases:
+        if not isinstance(case,dict) or not isinstance(case.get("ticket"),str): raise DownshiftError("Invalid case")
         expected = _label(case.get("label"))
         if not expected: raise DownshiftError("Invalid expected label in case")
         base=gateway.complete(gateway.c.baseline_model,case["ticket"])

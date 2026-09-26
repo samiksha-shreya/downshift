@@ -69,3 +69,11 @@ def test_regression_is_no_go():
 
 def test_redaction():
     assert 'sam@example.com' not in redact('Email sam@example.com and call +1 415-555-1212')
+
+def test_naive_timestamp_rejected():
+    with pytest.raises(DownshiftError,match='ISO-8601'):
+        Gateway(C,httpx.Client(transport=httpx.MockTransport(lambda r:None))).fetch_recent_spans('2026-09-26T00:00:00')
+
+def test_case_validation():
+    with pytest.raises(DownshiftError,match='Invalid case'):
+        evaluate(None,[{'label':'billing'}])
